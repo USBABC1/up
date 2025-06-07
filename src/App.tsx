@@ -12,6 +12,10 @@ import Dashboard from "./pages/Dashboard";
 import Calculator from "./pages/Calculator";
 import Projects from "./pages/Projects";
 import ProjectDetails from "./pages/ProjectDetails";
+import Templates from "./pages/Templates";
+import Reports from "./pages/Reports";
+import Settings from "./pages/Settings";
+import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 import "./App.css";
 
@@ -22,21 +26,30 @@ function App() {
         <Router>
           <Routes>
             <Route path="/" element={<Layout />}>
-              <Route index element={<Navigate to="/dashboard\" replace />} />
-
+              <Route index element={<Navigate to="/dashboard" replace />} />
               <Route path="dashboard" element={<Dashboard />} />
-
-              <Route path="calculator" element={<Calculator />} />
-
-              <Route path="projects" element={<Projects />} />
-
-              <Route path="projects/:id" element={<ProjectDetails />} />
-
+              <Route path="calculadora" element={<Calculator />} />
+              <Route path="projetos" element={<Projects />} />
+              <Route path="projetos/:id" element={<ProjectDetails />} />
+              <Route path="templates" element={<Templates />} />
+              <Route path="relatorios" element={<Reports />} />
+              <Route path="configuracoes" element={<Settings />} />
+              <Route path="perfil" element={<Profile />} />
               <Route path="*" element={<NotFound />} />
             </Route>
           </Routes>
         </Router>
-        <Toaster richColors position="top-right" />
+        <Toaster 
+          richColors 
+          position="top-right" 
+          toastOptions={{
+            style: {
+              background: 'hsl(var(--card))',
+              border: '1px solid hsl(var(--border))',
+              color: 'hsl(var(--card-foreground))',
+            },
+          }}
+        />
       </ThemeProvider>
     </AuthProvider>
   );

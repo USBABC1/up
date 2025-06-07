@@ -1,26 +1,51 @@
 import { Outlet } from "react-router-dom";
+import { useState } from "react";
 import Sidebar from "./Sidebar";
-import ThemeToggle from "./ThemeToggle";
-import { CalendarClock } from "lucide-react";
+import Header from "./Header";
+import { useAuth } from "../context/AuthContext";
+import AuthModal from "./AuthModal";
 
 const Layout = () => {
-  return (
-    <div className="flex min-h-screen">
-      <Sidebar />
-      <div className="flex flex-col flex-1">
-        <header className="h-16 border-b flex items-center justify-between px-6 bg-card">
-          <div className="flex items-center gap-2">
-            <CalendarClock className="h-6 w-6 text-primary" />
+  const { user, loading } = useAuth();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
-            <h1 className="text-xl font-semibold">Launch Master</h1>
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <AuthModal />;
+  }
+
+  return (
+    <div className="flex min-h-screen bg-background">
+      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      
+      <div className="flex flex-col flex-1 lg:ml-64">
+        <Header onMenuClick={() => setSidebarOpen(true)} />
+        
+        <main className="flex-1 p-4 lg:p-6 overflow-auto">
+          <div className="max-w-7xl mx-auto">
+            <Outlet />
           </div>
-          <ThemeToggle />
-        </header>
-        <main className="flex-1 p-6 overflow-auto">
-          <Outlet />
         </main>
-        <footer className="h-12 border-t flex items-center justify-center px-6 text-sm text-muted-foreground bg-card">
-          Launch Master &copy; {new Date().getFullYear()} - All rights reserved
+        
+        <footer className="border-t bg-card px-4 lg:px-6 py-4">
+          <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between text-sm text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <span>Launch Master</span>
+              <span>&copy; {new Date().getFullYear()}</span>
+            </div>
+            <div className="flex items-center gap-4 mt-2 sm:mt-0">
+              <span>Versão 2.0</span>
+              <span>•</span>
+              <span>Feito com ❤️ no Brasil</span>
+            </div>
+          </div>
         </footer>
       </div>
     </div>

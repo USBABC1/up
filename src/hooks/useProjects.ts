@@ -46,6 +46,10 @@ export const useProjects = () => {
         eventDate: new Date(p.event_date),
         status: p.status as ProjectStatus,
         createdAt: new Date(p.created_at),
+        priority: (p as any).priority || 'media',
+        budget: (p as any).budget || undefined,
+        team: (p as any).team || [],
+        tags: (p as any).tags || [],
         phases: (phasesByProject[p.id] || []).reduce((acc: any, phase: any) => {
           acc[phase.name] = {
             start: new Date(phase.start_date),
@@ -57,8 +61,8 @@ export const useProjects = () => {
 
       setProjects(formattedProjects);
     } catch (error) {
-      console.error('Error loading projects:', error);
-      toast.error('Failed to load projects');
+      console.error('Erro ao carregar projetos:', error);
+      toast.error('Falha ao carregar projetos');
     } finally {
       setLoading(false);
     }
@@ -73,7 +77,11 @@ export const useProjects = () => {
           client: project.client,
           description: project.description,
           event_date: project.eventDate.toISOString(),
-          status: project.status
+          status: project.status,
+          priority: project.priority || 'media',
+          budget: project.budget,
+          team: project.team || [],
+          tags: project.tags || []
         })
         .select()
         .single();
@@ -95,26 +103,32 @@ export const useProjects = () => {
       if (phasesError) throw phasesError;
 
       await loadProjects();
-      toast.success('Project created successfully');
+      toast.success('Projeto criado com sucesso!');
       return projectData.id;
     } catch (error) {
-      console.error('Error adding project:', error);
-      toast.error('Failed to create project');
+      console.error('Erro ao adicionar projeto:', error);
+      toast.error('Falha ao criar projeto');
       throw error;
     }
   };
 
   const updateProject = async (id: string, updatedProject: Partial<Project>): Promise<boolean> => {
     try {
+      const updateData: any = {};
+      
+      if (updatedProject.name !== undefined) updateData.name = updatedProject.name;
+      if (updatedProject.client !== undefined) updateData.client = updatedProject.client;
+      if (updatedProject.description !== undefined) updateData.description = updatedProject.description;
+      if (updatedProject.eventDate !== undefined) updateData.event_date = updatedProject.eventDate.toISOString();
+      if (updatedProject.status !== undefined) updateData.status = updatedProject.status;
+      if (updatedProject.priority !== undefined) updateData.priority = updatedProject.priority;
+      if (updatedProject.budget !== undefined) updateData.budget = updatedProject.budget;
+      if (updatedProject.team !== undefined) updateData.team = updatedProject.team;
+      if (updatedProject.tags !== undefined) updateData.tags = updatedProject.tags;
+
       const { error: projectError } = await supabase
         .from('projects')
-        .update({
-          name: updatedProject.name,
-          client: updatedProject.client,
-          description: updatedProject.description,
-          event_date: updatedProject.eventDate?.toISOString(),
-          status: updatedProject.status
-        })
+        .update(updateData)
         .eq('id', id);
 
       if (projectError) throw projectError;
@@ -143,11 +157,11 @@ export const useProjects = () => {
       }
 
       await loadProjects();
-      toast.success('Project updated successfully');
+      toast.success('Projeto atualizado com sucesso!');
       return true;
     } catch (error) {
-      console.error('Error updating project:', error);
-      toast.error('Failed to update project');
+      console.error('Erro ao atualizar projeto:', error);
+      toast.error('Falha ao atualizar projeto');
       return false;
     }
   };
@@ -162,17 +176,54 @@ export const useProjects = () => {
       if (error) throw error;
 
       await loadProjects();
-      toast.success('Project deleted successfully');
+      toast.success('Projeto excluído com sucesso!');
       return true;
     } catch (error) {
-      console.error('Error deleting project:', error);
-      toast.error('Failed to delete project');
+      console.error('Erro ao excluir projeto:', error);
+      toast.error('Falha ao excluir projeto');
       return false;
+    }
+  };
+
+  const duplicateProject = async (id: string): Promise<string | null> => {
+    try {
+      const project = projects.find(p => p.id === id);
+      if (!project) throw new Error('Projeto não encontrado');
+
+      const duplicatedProject = {
+        ...project,
+        name: `${project.name} (Cópia)`,
+        status: 'planejamento' as ProjectStatus,
+        eventDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days from now
+      };
+
+      delete (duplicatedProject as any).id;
+      delete (duplicatedProject as any).createdAt;
+
+      return await addProject(duplicatedProject);
+    } catch (error) {
+      console.error('Erro ao duplicar projeto:', error);
+      toast.error('Falha ao duplicar projeto');
+      return null;
     }
   };
 
   const getProject = (id: string): Project | undefined => {
     return projects.find(project => project.id === id);
+  };
+
+  const getProjectsByStatus = (status: ProjectStatus): Project[] => {
+    return projects.filter(project => project.status === status);
+  };
+
+  const searchProjects = (query: string): Project[] => {
+    const lowercaseQuery = query.toLowerCase();
+    return projects.filter(project =>
+      project.name.toLowerCase().includes(lowercaseQuery) ||
+      (project.client && project.client.toLowerCase().includes(lowercaseQuery)) ||
+      (project.description && project.description.toLowerCase().includes(lowercaseQuery)) ||
+      (project.tags && project.tags.some(tag => tag.toLowerCase().includes(lowercaseQuery)))
+    );
   };
 
   return {
@@ -181,6 +232,10 @@ export const useProjects = () => {
     addProject,
     updateProject,
     deleteProject,
-    getProject
+    duplicateProject,
+    getProject,
+    getProjectsByStatus,
+    searchProjects,
+    refreshProjects: loadProjects
   };
 };
