@@ -1,15 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { 
-  LayoutDashboard, 
-  Calculator, 
-  Calendar, 
-  Settings, 
-  FolderOpen,
-  Template,
-  BarChart3,
-  X,
-  Rocket
-} from "lucide-react";
+import { LayoutDashboard, Calculator, Calendar, Settings, FolderOpen, BookTemplate as Template, BarChart3, X, Rocket } from "lucide-react";
 import { cn } from "../lib/utils";
 
 interface SidebarProps {
