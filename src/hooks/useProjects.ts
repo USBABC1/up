@@ -13,16 +13,31 @@ export const useProjects = () => {
 
   const loadProjects = async () => {
     try {
+      // Fetch projects separately
       const { data: projectsData, error: projectsError } = await supabase
         .from('projects')
-        .select(`
-          *,
-          phases (*)
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
       if (projectsError) throw projectsError;
 
+      // Fetch phases separately
+      const { data: phasesData, error: phasesError } = await supabase
+        .from('phases')
+        .select('*');
+
+      if (phasesError) throw phasesError;
+
+      // Group phases by project_id
+      const phasesByProject = phasesData.reduce((acc: any, phase: any) => {
+        if (!acc[phase.project_id]) {
+          acc[phase.project_id] = [];
+        }
+        acc[phase.project_id].push(phase);
+        return acc;
+      }, {});
+
+      // Combine projects with their phases
       const formattedProjects = projectsData.map(p => ({
         id: p.id,
         name: p.name,
@@ -31,7 +46,7 @@ export const useProjects = () => {
         eventDate: new Date(p.event_date),
         status: p.status as ProjectStatus,
         createdAt: new Date(p.created_at),
-        phases: p.phases.reduce((acc: any, phase: any) => {
+        phases: (phasesByProject[p.id] || []).reduce((acc: any, phase: any) => {
           acc[phase.name] = {
             start: new Date(phase.start_date),
             end: new Date(phase.end_date)
